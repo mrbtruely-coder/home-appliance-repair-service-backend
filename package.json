@@ -4,7 +4,7 @@
   "description": "Backend API service for Doorstep Home Appliance Repairs Hyderabad",
   "main": "server.js",
   "scripts": {
-    "build": "echo 'No build step required'",
+    "build": "npm install",
     "start": "node server.js",
     "dev": "node server.js"
   },
