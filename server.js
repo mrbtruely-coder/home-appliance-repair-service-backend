@@ -13,7 +13,16 @@ app.use(express.json());
 // API Routes
 app.use('/api/booking', bookingRoutes);
 
-// Health check
+// Health checks
+app.get('/', (req, res) => {
+  res.json({
+    status: 'OK',
+    service: 'Doorstep Services Hyderabad Backend API',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
