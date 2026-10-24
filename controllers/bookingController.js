@@ -4,7 +4,7 @@ const VALID_AREAS = ['Ameerpet Main Road', 'Chanda Nagar', 'Alwal', 'Suchitra'];
 
 exports.createBooking = async (req, res) => {
   try {
-    const { name, phone, area, service, address, issue, date, timeSlot } = req.body;
+    const { name, phone, email, area, service, address, issue, date, timeSlot } = req.body;
 
     if (!name || !phone || !area || !service) {
       return res.status(400).json({
@@ -13,13 +13,14 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-    const bookingId = 'DS-' + Date.now().toString().slice(-6);
+    const bookingId = req.body.bookingId || req.body.bookingRef || 'DS-' + Date.now().toString().slice(-6);
 
-    // Send confirmation email
+    // Send confirmation emails (to customer + doorstep team)
     await emailService.sendBookingConfirmation({
       bookingId,
       name,
       phone,
+      email,
       area,
       service,
       address,

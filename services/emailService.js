@@ -1,23 +1,13 @@
 const nodemailer = require('nodemailer');
 
 exports.sendBookingConfirmation = async (bookingData) => {
-  const { bookingId, name, phone, area, service, address, issue, date, timeSlot } = bookingData;
+  const { bookingId, name, phone, email, area, service, address, issue, date, timeSlot } = bookingData;
 
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = process.env.SMTP_PORT || 587;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-  if (!smtpHost || !smtpUser) {
-    console.log(`[DEV MODE] Booking Email logged for ID ${bookingId}:`, {
-      name,
-      phone,
-      area,
-      service,
-      helpline: '9515661677',
-    });
-    return;
-  }
+  const smtpHost = process.env.SMTP_HOST || 'mail.goexpertsapps.com';
+  const smtpPort = Number(process.env.SMTP_PORT) || 587;
+  const smtpUser = process.env.SMTP_USER || 'bookings@doorstephub.com';
+  const smtpPass = process.env.SMTP_PASS || 'jwT6NlDRBYh5';
+  const doorstepTeamEmail = process.env.ADMIN_NOTIFY_EMAIL || process.env.NOTIFICATION_EMAIL || 'doorstephub@gmail.com';
 
   const transporter = nodemailer.createTransport({
     host: smtpHost,
@@ -27,30 +17,103 @@ exports.sendBookingConfirmation = async (bookingData) => {
       user: smtpUser,
       pass: smtpPass,
     },
+    tls: {
+      rejectUnauthorized: false,
+    },
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
   });
 
-  const htmlContent = `
-    <div style="font-family: Arial, sans-serif; background: #f8fafd; padding: 24px; color: #0A2558;">
-      <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 24px; max-width: 580px; margin: 0 auto;">
-        <h2 style="color: #0A2558; margin-top: 0;">Doorstep Service Booking Confirmation</h2>
-        <p><strong>Booking ID:</strong> ${bookingId}</p>
-        <p><strong>Customer:</strong> ${name} (${phone})</p>
-        <p><strong>Service:</strong> ${service}</p>
-        <p><strong>Location:</strong> ${area}, Hyderabad</p>
-        <p><strong>Address:</strong> ${address || 'Provided via phone'}</p>
-        <p><strong>Preferred Slot:</strong> ${date || 'Today'} (${timeSlot || 'Immediate 90 min'})</p>
-        <p><strong>Reported Issue:</strong> ${issue || 'Standard inspection'}</p>
-        <div style="margin-top: 20px; padding: 12px; background: #EFF6FF; border-radius: 8px; font-weight: bold;">
-          Support Helpline: 9515661677
+  const customerHtml = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 24px; color: #0f172a;">
+      <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+        <div style="background: linear-gradient(135deg, #06183B 0%, #0A2558 55%, #163B7C 100%); padding: 32px 28px; text-align: center; color: #ffffff;">
+          <span style="display: inline-block; background: rgba(255,107,0,0.25); color: #FFD6B8; padding: 4px 14px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(255,107,0,0.4);">Doorstep Hub Hyderabad</span>
+          <h1 style="margin: 8px 0 0 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: #ffffff;">Repair Technician Dispatched!</h1>
+        </div>
+        <div style="padding: 32px 28px;">
+          <div style="display: inline-flex; align-items: center; gap: 6px; background: #FFF4EC; color: #E55A00; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 999px; border: 1px solid #FFCCA3; margin-bottom: 20px;">
+            ✓ Dispatch Confirmed · Within 90 Mins
+          </div>
+          <p style="font-size: 16px; line-height: 1.6; color: #334155; margin-bottom: 24px;">
+            Dear <strong>${name}</strong>,<br>
+            Thank you for choosing <strong>Doorstep Hub</strong>. Your service request has been logged successfully, and an expert local technician is being dispatched to your location in <strong>${area}, Hyderabad</strong>.
+          </p>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 28px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+              <tr><td style="padding: 9px 0; color: #64748b;">Booking Reference:</td><td style="padding: 9px 0; text-align: right; font-weight: 700; color: #FF6B00;">${bookingId}</td></tr>
+              <tr><td style="padding: 9px 0; color: #64748b; border-top: 1px solid #f1f5f9;">Service / Appliance:</td><td style="padding: 9px 0; text-align: right; font-weight: 600; color: #0A2558; border-top: 1px solid #f1f5f9;">${service}</td></tr>
+              <tr><td style="padding: 9px 0; color: #64748b; border-top: 1px solid #f1f5f9;">Customer Name:</td><td style="padding: 9px 0; text-align: right; font-weight: 600; color: #0f172a; border-top: 1px solid #f1f5f9;">${name}</td></tr>
+              <tr><td style="padding: 9px 0; color: #64748b; border-top: 1px solid #f1f5f9;">Contact Phone:</td><td style="padding: 9px 0; text-align: right; font-weight: 600; color: #0f172a; border-top: 1px solid #f1f5f9;">${phone}</td></tr>
+              <tr><td style="padding: 9px 0; color: #64748b; border-top: 1px solid #f1f5f9;">Location:</td><td style="padding: 9px 0; text-align: right; font-weight: 600; color: #0f172a; border-top: 1px solid #f1f5f9;">${area}, Hyderabad</td></tr>
+              <tr><td style="padding: 9px 0; color: #64748b; border-top: 1px solid #f1f5f9;">Booking Fee:</td><td style="padding: 9px 0; text-align: right; font-weight: 700; color: #16a34a; border-top: 1px solid #f1f5f9;">₹0 (Free Booking)</td></tr>
+              <tr><td style="padding: 9px 0; color: #64748b; border-top: 1px solid #f1f5f9;">Expected Arrival:</td><td style="padding: 9px 0; text-align: right; font-weight: 700; color: #d97706; border-top: 1px solid #f1f5f9;">Within 90 Minutes</td></tr>
+            </table>
+          </div>
+          <div style="margin: 24px 0; padding: 18px; background: #FFF4EC; border-radius: 12px; border-left: 4px solid #FF6B00; font-size: 13px; color: #475569;">
+            <strong style="color: #0A2558;">What Happens Next?</strong><br>
+            1. Our local dispatch center assigns the closest certified technician.<br>
+            2. Technician will call your mobile (<strong>${phone}</strong>) before arrival.<br>
+            3. Free inspection and transparent estimate before starting repairs.
+          </div>
+          <a href="tel:9515661677" style="display: block; text-align: center; background: #0A2558; color: #ffffff !important; text-decoration: none; font-weight: 800; padding: 14px 20px; border-radius: 10px; font-size: 14px; margin: 16px 0;">
+            📞 Support Helpline: 9515661677
+          </a>
         </div>
       </div>
     </div>
   `;
 
-  await transporter.sendMail({
-    from: `"Doorstep Service Hyderabad" <${smtpUser}>`,
-    to: process.env.NOTIFICATION_EMAIL || smtpUser,
-    subject: `New Repair Booking: ${service} in ${area} [${bookingId}]`,
-    html: htmlContent,
-  });
+  const teamHtml = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 24px; line-height: 1.6; max-width: 600px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
+      <div style="background: #0A2558; color: #ffffff; padding: 18px 24px; border-radius: 8px; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 700;">New Customer Booking Dispatched</h2>
+        <p style="margin: 4px 0 0; font-size: 13px; color: #FFD6B8;">Doorstep Hub • Hyderabad Home Appliance Dispatch</p>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <tr><td style="padding: 10px 0; color: #64748b; width: 140px; border-bottom: 1px solid #f1f5f9;">Booking Ref:</td><td style="padding: 10px 0; font-weight: 800; color: #FF6B00; border-bottom: 1px solid #f1f5f9;">${bookingId}</td></tr>
+        <tr><td style="padding: 10px 0; color: #64748b; border-bottom: 1px solid #f1f5f9;">Customer Name:</td><td style="padding: 10px 0; font-weight: 700; color: #0A2558; border-bottom: 1px solid #f1f5f9;">${name}</td></tr>
+        <tr><td style="padding: 10px 0; color: #64748b; border-bottom: 1px solid #f1f5f9;">Customer Phone:</td><td style="padding: 10px 0; font-weight: 800; border-bottom: 1px solid #f1f5f9;"><a href="tel:${phone}" style="color: #0A2558; text-decoration: underline;">${phone}</a></td></tr>
+        <tr><td style="padding: 10px 0; color: #64748b; border-bottom: 1px solid #f1f5f9;">Customer Email:</td><td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;">${email || 'Not provided'}</td></tr>
+        <tr><td style="padding: 10px 0; color: #64748b; border-bottom: 1px solid #f1f5f9;">Service / Appliance:</td><td style="padding: 10px 0; font-weight: 700; color: #0A2558; border-bottom: 1px solid #f1f5f9;">${service}</td></tr>
+        <tr><td style="padding: 10px 0; color: #64748b; border-bottom: 1px solid #f1f5f9;">Location / Area:</td><td style="padding: 10px 0; font-weight: 700; color: #0A2558; border-bottom: 1px solid #f1f5f9;">${area}, Hyderabad</td></tr>
+        <tr><td style="padding: 10px 0; color: #64748b; border-bottom: 1px solid #f1f5f9;">Address:</td><td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;">${address || 'Provided over call'}</td></tr>
+        <tr><td style="padding: 10px 0; color: #64748b; border-bottom: 1px solid #f1f5f9;">Reported Issue:</td><td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;">${issue || 'Standard inspection'}</td></tr>
+      </table>
+      <div style="background: #FFF4EC; border: 1px solid #FFCCA3; border-radius: 8px; padding: 14px 18px; margin-top: 22px; font-size: 13px; color: #9A3412;">
+        ⚡ <strong>Action for Team:</strong> Please call customer <a href="tel:${phone}" style="color: #C2410C; font-weight: 800;">${phone}</a> and assign local technician to arrive within 90 minutes.
+      </div>
+    </div>
+  `;
+
+  // 1. Send confirmation email to customer (if email provided)
+  if (email && email.includes('@')) {
+    try {
+      await transporter.sendMail({
+        from: `"Doorstep Hub" <${smtpUser}>`,
+        to: email.trim(),
+        replyTo: doorstepTeamEmail,
+        subject: `✓ Booking Confirmed: ${service} [${bookingId}] - Doorstep Hub`,
+        html: customerHtml,
+      });
+      console.log(`Confirmation email sent to customer: ${email}`);
+    } catch (err) {
+      console.error('Failed to send customer confirmation email:', err.message);
+    }
+  }
+
+  // 2. Send booking alert to Doorstep team at doorstephub@gmail.com
+  try {
+    await transporter.sendMail({
+      from: `"Doorstep Hub Bookings" <${smtpUser}>`,
+      to: doorstepTeamEmail,
+      replyTo: (email && email.includes('@')) ? email.trim() : smtpUser,
+      subject: `[NEW BOOKING] ${bookingId} - ${service} in ${area} (${name})`,
+      html: teamHtml,
+    });
+    console.log(`Booking notification sent to doorstep team: ${doorstepTeamEmail}`);
+  } catch (err) {
+    console.error('Failed to send doorstep team notification email:', err.message);
+  }
 };
