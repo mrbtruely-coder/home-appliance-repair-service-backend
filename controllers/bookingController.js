@@ -4,7 +4,24 @@ const VALID_AREAS = ['Ameerpet Main Road', 'Chanda Nagar', 'Alwal', 'Suchitra'];
 
 exports.createBooking = async (req, res) => {
   try {
-    const { name, phone, email, area, service, address, issue, date, timeSlot } = req.body;
+    const {
+      name,
+      phone,
+      email,
+      area,
+      otherLocation,
+      isOtherLocation,
+      service,
+      subcategory,
+      price,
+      address,
+      issue,
+      date,
+      timeSlot,
+      slot,
+      time,
+      bookingDate,
+    } = req.body;
 
     if (!name || !phone || !area || !service) {
       return res.status(400).json({
@@ -14,6 +31,9 @@ exports.createBooking = async (req, res) => {
     }
 
     const bookingId = req.body.bookingId || req.body.bookingRef || 'DS-' + Date.now().toString().slice(-6);
+    const finalDate = date || bookingDate || 'Today';
+    const finalSlot = slot || timeSlot || time || 'Standard Arrival';
+    const finalTime = time || timeSlot || slot || 'Within 90 Minutes';
 
     // Send confirmation emails (to customer + doorstep team)
     await emailService.sendBookingConfirmation({
@@ -22,11 +42,17 @@ exports.createBooking = async (req, res) => {
       phone,
       email,
       area,
+      otherLocation: otherLocation || (isOtherLocation ? area : ''),
+      isOtherLocation: Boolean(isOtherLocation || otherLocation),
       service,
+      subcategory,
+      price,
       address,
       issue,
-      date,
-      timeSlot,
+      date: finalDate,
+      timeSlot: finalSlot,
+      slot: finalSlot,
+      time: finalTime,
     });
 
     return res.status(200).json({
